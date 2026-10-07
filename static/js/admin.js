@@ -1,8 +1,47 @@
-/* Oplestaurants - panel administrativo (tareas, inventario, ubicaciones). */
+/* Oplesktaurant - panel administrativo (tareas, inventario, ubicaciones). */
 (function () {
   "use strict";
 
   var csrfToken = "";
+  var productsCache = [];
+  var refreshVersion = 0;
+
+  function stockSummary(products) {
+    return { total: products.length, zero: products.filter(function (p) { return Number(p.quantity) === 0; }).length };
+  }
+
+  function taskDistribution(pending, completed) {
+    var total = pending + completed;
+    return { total: total, completedPercent: total ? completed / total * 100 : 0 };
+  }
+
+  function formatCreated(value) {
+    var date = new Date(value);
+    return value && !isNaN(date.getTime()) ? date.toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" }) : "Sin fecha";
+  }
+
+  function labelInput(parent, input, text) {
+    var label = el("label", "edit-field", text);
+    label.appendChild(input);
+    parent.appendChild(label);
+  }
+
+  function replaceList(list, items, renderer) {
+    var active = document.activeElement;
+    var row = active && list.contains(active) ? active.closest("li[data-id]") : null;
+    var id = row ? row.dataset.id : null;
+    var text = active ? active.textContent : "";
+    var label = active ? active.getAttribute("aria-label") : null;
+    list.replaceChildren();
+    items.forEach(function (item) { list.appendChild(renderer(item)); });
+    if (!row) return;
+    var nextRow = Array.from(list.children).find(function (item) { return item.dataset.id === id; });
+    var next = nextRow && Array.from(nextRow.querySelectorAll("button, input")).find(function (item) {
+      return label ? item.getAttribute("aria-label") === label : item.textContent === text;
+    });
+    // Tras editar/eliminar, mantener el foco del teclado fuera del body.
+    (next || list.closest("section")).focus({ preventScroll: true });
+  }
 
   // ---- Utilidades --------------------------------------------------------
 
@@ -53,14 +92,7 @@
     return String(n);
   }
 
-  var SVG_NS = "http://www.w3.org/2000/svg";
-  function svgEl(tag, attrs) {
-    var node = document.createElementNS(SVG_NS, tag);
-    Object.keys(attrs || {}).forEach(function (key) { node.setAttribute(key, attrs[key]); });
-    return node;
-  }
-
-  // Gráfica de barras horizontales basada solo en datos reales.
+  // Barras HTML: cada valor sigue legible sin estilos ni animación.
   function renderBarChart(container, items) {
     if (!container) return;
     container.innerHTML = "";
@@ -69,57 +101,73 @@
       return;
     }
     var max = items.reduce(function (acc, it) { return Math.max(acc, it.value); }, 0) || 1;
-    var rowH = 30;
-    var width = 300;
-    var labelW = 110;
-    var height = items.length * rowH + 6;
-    var svg = svgEl("svg", {
-      viewBox: "0 0 " + width + " " + height,
-      role: "img",
-      "aria-label": "Gráfica de datos reales"
+    var list = el("ul", "bar-chart");
+    items.forEach(function (it) {
+      var row = el("li");
+      var label = el("div", "bar-label");
+      label.appendChild(el("span", "", it.label));
+      label.appendChild(el("strong", "", it.value));
+      var track = el("div", "bar-track");
+      track.setAttribute("aria-hidden", "true");
+      var fill = el("div", "bar-fill");
+      fill.style.width = (it.value / max * 100) + "%";
+      fill.style.backgroundColor = it.color;
+      track.appendChild(fill);
+      row.appendChild(label); row.appendChild(track); list.appendChild(row);
     });
-    items.forEach(function (it, i) {
-      var y = i * rowH + 4;
-      var barW = Math.max(2, (it.value / max) * (width - labelW - 40));
-      var label = svgEl("text", {
-        x: 0, y: y + 15, "font-size": "12",
-        "font-family": "system-ui, sans-serif", fill: "#334155"
-      });
-      label.textContent = it.label.length > 16 ? it.label.slice(0, 15) + "…" : it.label;
-      svg.appendChild(label);
-      svg.appendChild(svgEl("rect", {
-        x: labelW, y: y + 4, width: barW, height: 16, rx: 4,
-        fill: it.color || "#e11d48"
-      }));
-      var value = svgEl("text", {
-        x: labelW + barW + 6, y: y + 16, "font-size": "12", "font-weight": "700",
-        "font-family": "system-ui, sans-serif", fill: "#0f172a"
-      });
-      value.textContent = String(it.value);
-      svg.appendChild(value);
+    container.appendChild(list);
+  }
+
+  function renderDonut(container, pending, completed) {
+    container.replaceChildren();
+    var stats = taskDistribution(pending, completed);
+    var layout = el("div", "donut-layout");
+    var donut = el("div", "donut");
+    donut.setAttribute("aria-hidden", "true");
+    donut.style.background = stats.total ? "conic-gradient(var(--chart-completed) 0 " + stats.completedPercent + "%, var(--chart-pending) " + stats.completedPercent + "% 100%)" : "var(--chart-track)";
+    var center = el("div", "donut-center");
+    center.appendChild(el("strong", "", stats.total));
+    center.appendChild(el("span", "", "tareas"));
+    donut.appendChild(center); layout.appendChild(donut);
+    var legend = el("ul", "chart-legend");
+    [{ label: "Pendientes", value: pending, color: "var(--chart-pending)" }, { label: "Completadas", value: completed, color: "var(--chart-completed)" }].forEach(function (item) {
+      var row = el("li");
+      var dot = el("span", "legend-dot");
+      dot.style.backgroundColor = item.color;
+      dot.setAttribute("aria-hidden", "true");
+      row.appendChild(dot); row.appendChild(el("span", "", item.label)); row.appendChild(el("strong", "", item.value)); legend.appendChild(row);
     });
-    container.appendChild(svg);
+    layout.appendChild(legend); container.appendChild(layout);
+    container.appendChild(el("p", "chart-caption", stats.total ? stats.completedPercent.toLocaleString("es", { maximumFractionDigits: 1 }) + "% de las tareas registradas están completadas." : "Sin tareas registradas. No hay distribución que calcular."));
+  }
+
+  function setMetric(id, value) {
+    var node = document.getElementById(id);
+    if (node.textContent === String(value)) return;
+    node.textContent = value;
+    // El texto siempre muestra el dato real; solo animamos su presentación.
+    if (node.animate && !document.hidden && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      node.animate([{ opacity: .35, transform: "translateY(8px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: 450 });
+    }
   }
 
   // ---- Dashboard ---------------------------------------------------------
 
   function loadDashboard() {
+    var version = refreshVersion;
     return api("/api/dashboard").then(function (data) {
-      document.getElementById("m-pending").textContent = data.tasks_pending;
-      document.getElementById("m-completed").textContent = data.tasks_completed;
-      document.getElementById("m-products").textContent = data.products;
-      document.getElementById("m-locations").textContent = data.locations;
-
-      renderBarChart(document.getElementById("chart-tasks"), [
-        { label: "Pendientes", value: data.tasks_pending, color: "#f59e0b" },
-        { label: "Completadas", value: data.tasks_completed, color: "#22c55e" }
-      ]);
-      var palette = ["#e11d48", "#0ea5e9", "#22c55e", "#f59e0b", "#8b5cf6", "#14b8a6"];
+      if (version !== refreshVersion) return;
+      setMetric("m-pending", data.tasks_pending);
+      setMetric("m-completed", data.tasks_completed);
+      setMetric("m-products", data.products);
+      setMetric("m-locations", data.locations);
+      renderDonut(document.getElementById("chart-tasks"), data.tasks_pending, data.tasks_completed);
+      var palette = ["var(--accent)", "var(--accent-2)", "var(--accent-3)", "var(--accent-4)", "var(--scene-window-warm)", "var(--scene-edge)"];
       var categories = (data.products_by_category || []).map(function (item, i) {
         return { label: item.category, value: item.count, color: palette[i % palette.length] };
       });
       renderBarChart(document.getElementById("chart-products"), categories);
-    }).catch(function (err) { toast(err.message, true); });
+    });
   }
 
   // ---- Tareas ------------------------------------------------------------
@@ -130,6 +178,7 @@
     var main = el("div", "item-main");
     main.appendChild(el("div", "item-title", task.title));
     if (task.description) main.appendChild(el("div", "item-desc", task.description));
+    main.appendChild(el("div", "item-meta", "Creada: " + formatCreated(task.created_at)));
     li.appendChild(main);
 
     li.appendChild(el("span", "badge" + (task.status === "completed" ? " completed" : ""),
@@ -158,17 +207,30 @@
   }
 
   function loadTasks() {
+    var version = ++taskLoadVersion;
     var filter = document.getElementById("task-filter").value;
     var path = "/api/tasks" + (filter ? "?status=" + encodeURIComponent(filter) : "");
     return api(path).then(function (tasks) {
+      if (version !== taskLoadVersion) return;
       var list = document.getElementById("task-list");
-      list.innerHTML = "";
-      tasks.forEach(function (t) { list.appendChild(renderTask(t)); });
+      replaceList(list, tasks, renderTask);
       document.getElementById("tasks-empty").hidden = tasks.length !== 0;
-    }).catch(function (err) { toast(err.message, true); });
+    });
   }
-
-  function refresh() { loadDashboard(); loadTasks(); loadProducts(); loadLocations(); }
+  var taskLoadVersion = 0;
+  function refresh() {
+    var version = ++refreshVersion;
+    var button = document.getElementById("refresh-btn");
+    button.disabled = true;
+    document.getElementById("sync-status").textContent = "Actualizando datos…";
+    return Promise.allSettled([loadDashboard(), loadTasks(), loadProducts(), loadLocations()]).then(function (results) {
+      if (version !== refreshVersion) return;
+      button.disabled = false;
+      var errors = results.filter(function (result) { return result.status === "rejected"; });
+      document.getElementById("sync-status").textContent = errors.length ? "Actualización incompleta. Algunos datos pueden estar desactualizados." : "Consultado a las " + new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+      if (errors.length) toast(errors[0].reason.message, true);
+    });
+  }
 
   function createTask(evt) {
     evt.preventDefault();
@@ -200,8 +262,8 @@
     var descInput = el("input", "edit-desc");
     descInput.type = "text";
     descInput.value = task.description || "";
-    main.appendChild(titleInput);
-    main.appendChild(descInput);
+    labelInput(main, titleInput, "Título");
+    labelInput(main, descInput, "Descripción (opcional)");
     li.appendChild(main);
 
     var actions = el("div", "actions");
@@ -214,7 +276,7 @@
     });
     var cancel = el("button", "secondary", "Cancelar");
     cancel.type = "button";
-    cancel.addEventListener("click", loadTasks);
+    cancel.addEventListener("click", function () { loadTasks().catch(function (err) { toast(err.message, true); }); });
     actions.appendChild(save);
     actions.appendChild(cancel);
     li.appendChild(actions);
@@ -232,7 +294,7 @@
     main.appendChild(el("div", "item-meta", meta));
     li.appendChild(main);
 
-    li.appendChild(el("span", "item-meta",
+    li.appendChild(el("span", "item-meta quantity" + (Number(product.quantity) === 0 ? " zero" : ""),
       formatQuantity(product.quantity) + " " + product.unit));
 
     var actions = el("div", "actions");
@@ -240,18 +302,21 @@
     deltaInput.type = "number";
     deltaInput.step = "0.001";
     deltaInput.value = "1";
-    deltaInput.setAttribute("aria-label", "Ajuste de cantidad");
+    deltaInput.min = "0";
+    deltaInput.setAttribute("aria-label", "Ajuste de cantidad de " + product.name + " en " + product.unit);
     actions.appendChild(deltaInput);
 
     var minus = el("button", "secondary", "−");
     minus.type = "button";
     minus.title = "Restar";
+    minus.setAttribute("aria-label", "Restar existencias de " + product.name);
     minus.addEventListener("click", function () { adjust(product.id, deltaInput.value, -1); });
     actions.appendChild(minus);
 
     var plus = el("button", "secondary", "+");
     plus.type = "button";
     plus.title = "Sumar";
+    plus.setAttribute("aria-label", "Sumar existencias de " + product.name);
     plus.addEventListener("click", function () { adjust(product.id, deltaInput.value, 1); });
     actions.appendChild(plus);
 
@@ -270,12 +335,25 @@
   }
 
   function loadProducts() {
+    var version = refreshVersion;
     return api("/api/products").then(function (products) {
-      var list = document.getElementById("product-list");
-      list.innerHTML = "";
-      products.forEach(function (p) { list.appendChild(renderProduct(p)); });
-      document.getElementById("products-empty").hidden = products.length !== 0;
-    }).catch(function (err) { toast(err.message, true); });
+      if (version !== refreshVersion) return;
+      productsCache = products;
+      var stats = stockSummary(products);
+      setMetric("m-zero", stats.zero);
+      document.getElementById("stock-summary").textContent = stats.total ? (stats.total - stats.zero) + " de " + stats.total + " referencias tienen cantidad mayor que cero. No se aplica un umbral de stock." : "Sin productos registrados. No hay cobertura que calcular.";
+      filterProducts();
+    });
+  }
+
+  function filterProducts() {
+    var zeroOnly = document.getElementById("product-filter").value === "zero";
+    var products = productsCache.filter(function (p) { return !zeroOnly || Number(p.quantity) === 0; });
+    var list = document.getElementById("product-list");
+    replaceList(list, products, renderProduct);
+    var empty = document.getElementById("products-empty");
+    empty.hidden = products.length !== 0;
+    empty.textContent = zeroOnly ? "No hay productos con cantidad cero." : "No hay productos.";
   }
 
   function createProduct(evt) {
@@ -326,9 +404,9 @@
     unitInput.type = "text";
     unitInput.maxLength = 50;
     unitInput.value = product.unit;
-    main.appendChild(nameInput);
-    main.appendChild(catInput);
-    main.appendChild(unitInput);
+    labelInput(main, nameInput, "Nombre");
+    labelInput(main, catInput, "Categoría (opcional)");
+    labelInput(main, unitInput, "Unidad");
     li.appendChild(main);
 
     var actions = el("div", "actions");
@@ -346,7 +424,7 @@
     });
     var cancel = el("button", "secondary", "Cancelar");
     cancel.type = "button";
-    cancel.addEventListener("click", loadProducts);
+    cancel.addEventListener("click", filterProducts);
     actions.appendChild(save);
     actions.appendChild(cancel);
     li.appendChild(actions);
@@ -368,6 +446,12 @@
     if (loc.is_demo) li.appendChild(el("span", "badge demo", "Demo"));
 
     var actions = el("div", "actions");
+    var select = el("button", "secondary", "Ver en maqueta");
+    select.type = "button";
+    select.dataset.locationSelect = loc.id;
+    select.setAttribute("aria-pressed", "false");
+    select.addEventListener("click", function () { if (window.OpleCity) window.OpleCity.select(loc.id); });
+    actions.appendChild(select);
     var edit = el("button", "secondary", "Editar");
     edit.type = "button";
     edit.addEventListener("click", function () { editLocation(loc, li); });
@@ -381,13 +465,16 @@
   }
 
   function loadLocations() {
+    var version = ++locationLoadVersion;
     return api("/api/locations").then(function (locations) {
+      if (version !== locationLoadVersion) return;
       var list = document.getElementById("location-list");
-      list.innerHTML = "";
-      locations.forEach(function (loc) { list.appendChild(renderLocation(loc)); });
+      replaceList(list, locations, renderLocation);
+      if (window.OpleCity) window.OpleCity.render(locations);
       document.getElementById("locations-empty").hidden = locations.length !== 0;
-    }).catch(function (err) { toast(err.message, true); });
+    });
   }
+  var locationLoadVersion = 0;
 
   function createLocation(evt) {
     evt.preventDefault();
@@ -432,17 +519,23 @@
     xInput.min = "0";
     xInput.max = "1";
     xInput.step = "0.01";
+    xInput.required = true;
     xInput.value = loc.pos_x;
     var yInput = el("input");
     yInput.type = "number";
     yInput.min = "0";
     yInput.max = "1";
     yInput.step = "0.01";
+    yInput.required = true;
     yInput.value = loc.pos_y;
-    main.appendChild(nameInput);
-    main.appendChild(addressInput);
-    main.appendChild(xInput);
-    main.appendChild(yInput);
+    labelInput(main, nameInput, "Nombre");
+    labelInput(main, addressInput, "Dirección");
+    labelInput(main, xInput, "Posición x (0–1)");
+    labelInput(main, yInput, "Posición y (0–1)");
+    var demoInput = el("input");
+    demoInput.type = "checkbox";
+    demoInput.checked = loc.is_demo;
+    labelInput(main, demoInput, "Datos ficticios de demostración");
     li.appendChild(main);
 
     var actions = el("div", "actions");
@@ -451,8 +544,14 @@
     save.addEventListener("click", function () {
       var name = nameInput.value.trim();
       var address = addressInput.value.trim();
-      var x = Number(xInput.value);
-      var y = Number(yInput.value);
+      var rawX = xInput.value.trim();
+      var rawY = yInput.value.trim();
+      if (!rawX || !rawY) {
+        toast("Ambas posiciones normalizadas son obligatorias.", true);
+        return;
+      }
+      var x = Number(rawX);
+      var y = Number(rawY);
       if (!name) { toast("El nombre es obligatorio.", true); return; }
       if (!address) { toast("La dirección es obligatoria.", true); return; }
       if (!isFinite(x) || x < 0 || x > 1 || !isFinite(y) || y < 0 || y > 1) {
@@ -461,12 +560,12 @@
       }
       api("/api/locations/" + loc.id, {
         method: "PATCH",
-        body: { name: name, address: address, pos_x: x, pos_y: y }
+        body: { name: name, address: address, pos_x: x, pos_y: y, is_demo: demoInput.checked }
       }).then(refresh).catch(function (err) { toast(err.message, true); });
     });
     var cancel = el("button", "secondary", "Cancelar");
     cancel.type = "button";
-    cancel.addEventListener("click", loadLocations);
+    cancel.addEventListener("click", function () { loadLocations().catch(function (err) { toast(err.message, true); }); });
     actions.appendChild(save);
     actions.appendChild(cancel);
     li.appendChild(actions);
@@ -479,7 +578,25 @@
     document.getElementById("task-form").addEventListener("submit", createTask);
     document.getElementById("product-form").addEventListener("submit", createProduct);
     document.getElementById("location-form").addEventListener("submit", createLocation);
-    document.getElementById("task-filter").addEventListener("change", loadTasks);
+    document.getElementById("task-filter").addEventListener("change", function () { loadTasks().catch(function (err) { toast(err.message, true); }); });
+    document.getElementById("product-filter").addEventListener("change", filterProducts);
+    document.getElementById("refresh-btn").addEventListener("click", refresh);
+    var links = document.querySelectorAll(".sidebar nav a");
+    function activate(hash) {
+      links.forEach(function (link) {
+        if (link.getAttribute("href") === hash) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      });
+    }
+    links.forEach(function (link) { link.addEventListener("click", function () { activate(link.getAttribute("href")); }); });
+    window.addEventListener("hashchange", function () { activate(window.location.hash || "#resumen"); });
+    activate(window.location.hash || "#resumen");
+    if (typeof IntersectionObserver !== "undefined") {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) { if (entry.isIntersecting) activate("#" + entry.target.id); });
+      }, { rootMargin: "-10% 0px -65% 0px", threshold: 0 });
+      document.querySelectorAll(".admin-layout > section").forEach(function (section) { observer.observe(section); });
+    }
 
     var logout = document.getElementById("logout-btn");
     if (logout) {
@@ -504,9 +621,9 @@
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bootstrap);
-  } else {
-    bootstrap();
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootstrap);
+    else bootstrap();
   }
+  if (typeof module !== "undefined" && module.exports) module.exports = { stockSummary: stockSummary, taskDistribution: taskDistribution, formatCreated: formatCreated };
 })();

@@ -1,4 +1,4 @@
-"""Pruebas de la API de Oplestaurants.
+"""Pruebas de la API de Oplesktaurant.
 
 Usa SQLite in-memory mediante configuración de test, sin tocar la base de
 datos por defecto (PostgreSQL). Ejecutar con:
@@ -52,7 +52,7 @@ class ApiTestCase(unittest.TestCase):
         res = self.client.get("/")
         try:
             self.assertEqual(res.status_code, 200)
-            self.assertIn(b"Oplestaurants", res.data)
+            self.assertIn(b"Oplesktaurant", res.data)
         finally:
             # Cierra el archivo estático subyacente y evita ResourceWarning.
             res.close()

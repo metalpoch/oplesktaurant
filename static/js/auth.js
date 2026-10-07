@@ -1,4 +1,4 @@
-/* Oplestaurants - login del personal (sin auto-registro). */
+/* Oplesktaurant - login del personal (sin auto-registro). */
 (function () {
   "use strict";
 

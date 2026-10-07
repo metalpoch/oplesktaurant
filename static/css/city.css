@@ -1,0 +1,71 @@
+/* Volúmenes CSS en un plano XY: altura real sobre Z. No es cartografía. */
+/* Sin interpolación del tablero: al cambiar modo/tamaño no atraviesa escalas
+   que puedan recortar cubos. La cota 3D contempla también la escala del eje Z. */
+.city-card { --city-size: 440; --city-perspective: 1000; --city-extent: 230; --city-max-height: 90; --city-clearance: 24; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.city-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: .8rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
+.city-toolbar strong { margin-right: auto; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+.city-toolbar label { display: flex; gap: .4rem; align-items: center; font-size: .75rem; color: var(--muted); }
+.city-toolbar input { width: 80px; padding: 0; accent-color: var(--accent); }
+.city-toolbar button { font-size: .75rem; padding: .4rem .65rem; }
+.map-stage { position: relative; height: 460px; perspective: calc(var(--city-perspective) * 1px); overflow: hidden; background: radial-gradient(ellipse at 50% 40%, var(--surface-hover), var(--bg) 70%); }
+.map-stage::after { content: 'MAQUETA / NO GEOGRÁFICA'; position: absolute; left: 1.25rem; bottom: 1rem; color: var(--muted); font-size: .65rem; letter-spacing: .15em; pointer-events: none; }
+.city-board { --tilt: 58deg; --rotation: -32deg; --scale: .3; width: calc(var(--city-size) * 1px); height: calc(var(--city-size) * 1px); position: absolute; left: calc(50% - var(--city-size) * .5px); top: calc(50% - var(--city-size) * .5px); transform-style: preserve-3d; transform: scale3d(var(--scale), var(--scale), var(--scale)) rotateX(var(--tilt)) rotateZ(var(--rotation)); background: repeating-linear-gradient(0deg, transparent 0 83px, var(--scene-edge) 84px 85px, var(--scene-street) 86px 103px, var(--scene-edge) 104px 105px), repeating-linear-gradient(90deg, var(--scene-ground) 0 83px, var(--scene-edge) 84px 85px, var(--scene-street) 86px 103px, var(--scene-edge) 104px 105px); border: 1px solid var(--scene-edge); box-shadow: 0 0 0 10px var(--surface), 0 0 80px rgba(var(--glow-rgb), .2); }
+.city-decor, .city-pins { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
+.cuboid { --w: 30px; --h: 54px; position: absolute; width: var(--w); height: var(--w); transform-style: preserve-3d; background: transparent; padding: 0; border: 0; border-radius: 0; transform: translate(-50%, -50%); }
+.cuboid .face { position: absolute; display: block; pointer-events: none; border: 1px solid var(--scene-edge); backface-visibility: hidden; }
+.cuboid .roof { inset: 0; background: var(--scene-roof); transform: translateZ(var(--h)); box-shadow: inset 0 0 0 4px var(--scene-wall); }
+.cuboid .front, .cuboid .back { width: var(--w); height: var(--h); top: 100%; transform-origin: top; background: repeating-linear-gradient(90deg, transparent 0 5px, var(--scene-wall) 5px 10px), repeating-linear-gradient(0deg, var(--scene-window) 0 3px, var(--scene-ground) 3px 10px); transform: translateZ(var(--h)) rotateX(-90deg); }
+.cuboid .back { top: 0; transform: rotateX(90deg); }
+.cuboid .left, .cuboid .right { width: var(--h); height: var(--w); left: 0; top: 0; transform-origin: left; background: repeating-linear-gradient(0deg, var(--scene-ground) 0 6px, var(--scene-roof) 6px 9px); transform: rotateY(-90deg); }
+.cuboid .right { left: 100%; transform: translateZ(var(--h)) rotateY(90deg); }
+.restaurant { --w: 34px; --h: 28px; pointer-events: auto; cursor: pointer; }
+.restaurant .roof { background: var(--accent); border-color: var(--scene-window); box-shadow: inset 0 0 0 4px var(--scene-roof), 0 0 28px rgba(var(--glow-rgb), .5); color: var(--accent-ink); font-size: 14px; font-weight: 900; text-align: center; line-height: 32px; }
+.restaurant .front, .restaurant .back { background: repeating-linear-gradient(90deg, var(--scene-window-warm) 0 7px, var(--scene-wall) 7px 11px); border-color: var(--accent); }
+.restaurant .left, .restaurant .right { background: var(--scene-roof); border-color: var(--accent); }
+.restaurant:hover, .restaurant:focus-visible, .restaurant.selected { transform: translate(-50%, -50%) translateZ(12px); filter: none; outline: 3px solid var(--ink); outline-offset: 5px; }
+.city-selection { margin: 0; padding: .85rem 1.25rem; border-top: 1px solid var(--line); color: var(--ink); font-size: .85rem; min-height: 3rem; }
+.city-note { font-size: .8rem; color: var(--muted); margin: .8rem 0; }
+.scene-flat .map-stage { height: 360px; }
+.scene-flat .city-board { transform: scale(var(--scale)); }
+.scene-flat .city-decor { display: none; }
+.scene-flat .cuboid .face:not(.roof) { display: none; }
+.scene-flat .restaurant .roof { transform: none; }
+.scene-flat .restaurant:hover, .scene-flat .restaurant:focus-visible, .scene-flat .restaurant.selected { transform: translate(-50%, -50%); }
+@supports not (transform-style: preserve-3d) { .city-card { display: none; } }
+@media (max-width: 600px) { .map-stage { height: 340px; } .city-toolbar { padding: .8rem; gap: .5rem; } .city-toolbar strong { width: 100%; } }
+
+.restaurant.spotlight .roof { animation: destination-light .8s ease-out; }
+@keyframes destination-light { 0% { box-shadow: 0 0 55px 12px var(--scene-window); } 100% { box-shadow: inset 0 0 0 4px var(--scene-roof), 0 0 28px rgba(var(--glow-rgb), .5); } }
+
+/* Paisaje público: suelo fuera de campo deliberadamente, sin fitScene ni API. */
+.urban-universe { position: relative; isolation: isolate; min-height: 1000px; width: 100%; overflow: hidden; background: var(--bg); }
+.urban-background { position: absolute; inset: 0; pointer-events: none; perspective: 1700px; perspective-origin: 60% 38%; background: radial-gradient(ellipse at 80% 45%, rgba(var(--violet-rgb), .22), transparent 60%), var(--bg); }
+.urban-background::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, var(--bg) 0%, rgba(8, 6, 13, .92) 28%, rgba(8, 6, 13, .2) 62%, transparent 85%), linear-gradient(0deg, var(--bg) 0%, transparent 30% 70%, var(--bg) 100%); pointer-events: none; }
+.urban-camera { position: absolute; width: 2400px; height: 1700px; left: calc(60% - 1200px); top: calc(50% - 850px); transform-style: preserve-3d; animation: urban-drift 32s ease-in-out infinite alternate; }
+.urban-ground { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(59deg) rotateZ(-23deg); background: repeating-linear-gradient(0deg, transparent 0 180px, rgba(var(--violet-rgb), .3) 181px 183px, var(--scene-street) 184px 228px, rgba(var(--violet-rgb), .3) 229px 230px), repeating-linear-gradient(90deg, var(--scene-ground) 0 180px, rgba(var(--violet-rgb), .3) 181px 183px, var(--scene-street) 184px 228px, rgba(var(--violet-rgb), .3) 229px 230px); }
+.urban-block .roof { background: var(--scene-roof); border-color: var(--scene-edge); box-shadow: inset 0 0 0 6px var(--scene-wall); }
+.urban-block .front, .urban-block .back { background: repeating-linear-gradient(90deg, transparent 0 10px, var(--scene-wall) 11px 18px), repeating-linear-gradient(0deg, var(--scene-window) 0 6px, var(--scene-ground) 7px 22px); }
+.urban-block .left, .urban-block .right { background: repeating-linear-gradient(0deg, transparent 0 10px, var(--scene-street) 11px 20px), repeating-linear-gradient(90deg, var(--scene-window) 0 5px, var(--scene-wall) 6px 22px); }
+/* Solo una fachada por edificio respira; las otras tres conservan luz estática. */
+.urban-block .front { animation: windows-breathe 9s ease-in-out infinite alternate; animation-delay: var(--glow-delay); }
+.urban-pavilion .roof { background: var(--accent); border: 3px solid var(--scene-window); box-shadow: inset 0 0 0 9px var(--scene-roof), 0 0 48px rgba(var(--glow-rgb), .45); }
+.urban-pavilion .front, .urban-pavilion .back { background: repeating-linear-gradient(90deg, var(--scene-window-warm) 0 28px, var(--scene-wall) 29px 35px); border-color: var(--accent-2); }
+.urban-pavilion .left, .urban-pavilion .right { background: var(--scene-roof); border-color: var(--accent-2); }
+.fallback-tower { --w: 110px; --h: 220px; left: 1450px; top: 650px; }.fallback-pavilion { --w: 124px; --h: 62px; left: 1700px; top: 900px; }.fallback-tower-two { --w: 95px; --h: 165px; left: 1200px; top: 1000px; }
+.urban-haze { position: absolute; inset: 0; background: radial-gradient(ellipse at 78% 40%, rgba(var(--glow-rgb), .12), transparent 55%); }
+.urban-particle { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--scene-window); box-shadow: 0 0 16px var(--accent); animation: ambient-float 12s ease-in-out infinite alternate; }
+.particle-one { left: 62%; top: 22%; }.particle-two { left: 88%; top: 64%; animation-delay: -4s; }.particle-three { left: 45%; top: 80%; animation-delay: -8s; }
+.universe-foreground { position: relative; z-index: 1; max-width: 1600px; margin: auto; padding: 10rem clamp(1rem, 4vw, 4rem) 6rem; min-height: 1000px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+.universe-foreground .section-head { max-width: 35rem; }.universe-foreground h2 { font-size: clamp(3.5rem, 6vw, 6.2rem); }.universe-foreground p { color: var(--muted); }.universe-caption { margin-top: 5rem; font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; }
+@keyframes urban-drift { from { transform: translate3d(-30px, 0, 0); } to { transform: translate3d(35px, -20px, 0); } }
+@keyframes windows-breathe { from { opacity: .65; } to { opacity: .95; } }
+@keyframes ambient-float { from { opacity: .25; transform: translateY(10px); } to { opacity: .8; transform: translateY(-30px); } }
+@media (max-width: 700px) {
+  .urban-universe, .universe-foreground { min-height: 880px; }
+  .universe-foreground { padding-top: 4rem; justify-content: flex-start; }
+  .urban-camera { width: 2400px; height: 1700px; left: calc(50% - 1200px); top: calc(70% - 850px); }
+  .urban-ground { transform: rotateX(59deg) rotateZ(-23deg) scale3d(.78, .78, .78); }
+  .urban-background::after { background: linear-gradient(180deg, rgba(8, 6, 13, .95), rgba(8, 6, 13, .8) 35%, transparent 70%, var(--bg)), linear-gradient(90deg, rgba(8, 6, 13, .4), transparent); }
+  .universe-foreground h2 { font-size: clamp(3rem, 12vw, 5rem); }.universe-caption { margin-top: auto; }
+}
+@supports not (transform-style: preserve-3d) { .urban-camera { display: none; }.urban-background { background: radial-gradient(ellipse at 70% 55%, rgba(var(--violet-rgb), .4), var(--bg) 75%); } }

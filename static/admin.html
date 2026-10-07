@@ -3,50 +3,64 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Panel · Oplestaurants</title>
+  <title>Panel · Oplesktaurant</title>
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="stylesheet" href="/static/css/admin.css">
+  <link rel="stylesheet" href="/static/css/city.css">
 </head>
 <body class="admin">
+  <a class="visually-hidden skip-link" href="#resumen">Saltar al contenido</a>
+  <aside class="sidebar">
+    <a class="brand" href="/"><img class="brand-mark" src="/static/img/emblem.svg" alt="" aria-hidden="true"> Oplesktaurant</a>
+    <p class="sidebar-caption">Workspace / Gestión</p>
+    <nav aria-label="Panel administrativo">
+      <a href="#resumen" aria-current="location"><span aria-hidden="true">◈</span> Resumen</a>
+      <a href="#operaciones"><span aria-hidden="true">≡</span> Operaciones</a>
+      <a href="#inventario"><span aria-hidden="true">▦</span> Inventario</a>
+      <a href="#sucursales"><span aria-hidden="true">◇</span> Sucursales</a>
+    </nav>
+    <div class="sidebar-foot"><span class="eyebrow">Una visión compartida</span><p>Tareas, existencias y espacios.<br>La operación en un solo lugar.</p><a href="/">Ver sitio público ↗</a></div>
+  </aside>
   <header class="admin-topbar">
-    <span class="brand">
-      <span class="brand-mark" aria-hidden="true">O</span> Oplestaurants · Panel
-    </span>
+    <span class="topbar-context">Oplesktaurant <span>/ Centro de operaciones</span></span>
     <div class="top-actions">
       <span class="admin-user">Sesión: <strong id="admin-email">–</strong></span>
-      <a class="button secondary" href="/">Ver landing</a>
+      <button type="button" class="button secondary" id="refresh-btn">Actualizar</button>
       <button type="button" class="button danger" id="logout-btn">Salir</button>
     </div>
   </header>
 
   <main class="admin-layout">
-    <section class="panel" aria-labelledby="dash-title">
-      <h2 id="dash-title">Resumen</h2>
+    <section id="resumen" class="overview" aria-labelledby="dash-title" tabindex="-1">
+      <div class="overview-heading reveal"><div><span class="eyebrow">Control de la cadena</span><h1 id="dash-title">Todo en perspectiva.</h1><p>Una lectura clara de tus operaciones, sin perder el detalle.</p></div><span class="sync-label" id="sync-status" role="status">Conectando con tus datos…</span></div>
       <div class="metrics" id="dashboard">
-        <div class="metric"><span class="metric-value" id="m-pending">–</span><span class="metric-label">Tareas pendientes</span></div>
-        <div class="metric"><span class="metric-value" id="m-completed">–</span><span class="metric-label">Tareas completadas</span></div>
-        <div class="metric"><span class="metric-value" id="m-products">–</span><span class="metric-label">Productos</span></div>
-        <div class="metric"><span class="metric-value" id="m-locations">–</span><span class="metric-label">Ubicaciones</span></div>
+        <a href="#operaciones" class="metric reveal"><span class="metric-label">Tareas pendientes <span aria-hidden="true">↗</span></span><span class="metric-value" id="m-pending">–</span><span class="metric-caption">Trabajo por resolver</span></a>
+        <a href="#operaciones" class="metric reveal"><span class="metric-label">Tareas completadas <span aria-hidden="true">↗</span></span><span class="metric-value" id="m-completed">–</span><span class="metric-caption">Estado actual del registro</span></a>
+        <a href="#inventario" class="metric reveal"><span class="metric-label">Productos <span aria-hidden="true">↗</span></span><span class="metric-value" id="m-products">–</span><span class="metric-caption">Referencias en inventario</span></a>
+        <a href="#sucursales" class="metric reveal"><span class="metric-label">Sucursales registradas <span aria-hidden="true">↗</span></span><span class="metric-value" id="m-locations">–</span><span class="metric-caption">Incluye datos de demostración</span></a>
       </div>
       <div class="charts">
         <div class="chart-box">
-          <h3>Tareas por estado</h3>
+          <span class="eyebrow">Distribución operativa</span><h2>Tareas por estado</h2><p class="chart-caption">Estado actual, no historial de finalización.</p>
           <div id="chart-tasks" aria-live="polite"></div>
         </div>
         <div class="chart-box">
-          <h3>Productos por categoría</h3>
+          <span class="eyebrow">Composición del catálogo</span><h2>Productos por categoría</h2><p class="chart-caption">Número de referencias, no suma de existencias.</p>
           <div id="chart-products" aria-live="polite"></div>
         </div>
       </div>
+      <div class="insight-strip"><div><span class="eyebrow">Disponibilidad registrada</span><h2><span id="m-zero">–</span> productos con cantidad cero</h2><p id="stock-summary">Esperando inventario…</p></div><a class="button secondary" href="#inventario">Revisar existencias ↗</a></div>
     </section>
 
-    <section class="panel" aria-labelledby="tasks-title">
-      <h2 id="tasks-title">Tareas</h2>
+    <section id="operaciones" class="panel reveal" aria-labelledby="tasks-title" tabindex="-1">
+      <div class="panel-heading"><div><span class="eyebrow">01 / Operaciones</span><h2 id="tasks-title">Registro de tareas</h2><p>Gestiona el trabajo pendiente y consulta sus fechas de creación.</p></div></div>
+      <details class="create-details"><summary>+ Nueva tarea</summary>
       <form id="task-form" class="row-form">
-        <input type="text" id="task-title" placeholder="Título de la tarea" maxlength="200" required>
-        <input type="text" id="task-description" placeholder="Descripción (opcional)">
-        <button type="submit">Agregar</button>
+        <label for="task-title">Título<input type="text" id="task-title" maxlength="200" required></label>
+        <label for="task-description">Descripción (opcional)<input type="text" id="task-description"></label>
+        <button type="submit">Crear tarea</button>
       </form>
+      </details>
       <div class="filter">
         <label for="task-filter">Filtrar:</label>
         <select id="task-filter">
@@ -55,46 +69,60 @@
           <option value="completed">Completadas</option>
         </select>
       </div>
+      <div class="list-heading" aria-hidden="true"><span>Tarea / Creación</span><span>Estado y acciones</span></div>
       <ul id="task-list" class="item-list"></ul>
       <p id="tasks-empty" class="empty" hidden>No hay tareas.</p>
     </section>
 
-    <section class="panel" aria-labelledby="products-title">
-      <h2 id="products-title">Inventario</h2>
+    <section id="inventario" class="panel reveal" aria-labelledby="products-title" tabindex="-1">
+      <div class="panel-heading"><div><span class="eyebrow">02 / Inventario</span><h2 id="products-title">Existencias por producto</h2><p>Cantidades en su unidad original. Ajustes individuales, sin agregados incompatibles.</p></div></div>
+      <details class="create-details"><summary>+ Nuevo producto</summary>
       <form id="product-form" class="row-form">
-        <input type="text" id="product-name" placeholder="Nombre del producto" maxlength="200" required>
-        <input type="text" id="product-category" placeholder="Categoría (opcional)">
-        <input type="text" id="product-unit" placeholder="Unidad (ej. kg, pieza)" maxlength="50" required>
-        <input type="number" id="product-quantity" placeholder="Cantidad" min="0" step="0.001" value="0">
-        <button type="submit">Agregar</button>
+        <label for="product-name">Nombre<input type="text" id="product-name" maxlength="200" required></label>
+        <label for="product-category">Categoría (opcional)<input type="text" id="product-category"></label>
+        <label for="product-unit">Unidad (kg, pieza…)<input type="text" id="product-unit" maxlength="50" required></label>
+        <label for="product-quantity">Cantidad<input type="number" id="product-quantity" min="0" step="0.001" value="0"></label>
+        <button type="submit">Crear producto</button>
       </form>
+      </details>
+      <div class="filter"><label for="product-filter">Mostrar:</label><select id="product-filter"><option value="">Todo el inventario</option><option value="zero">Cantidad cero</option></select></div>
+      <div class="list-heading" aria-hidden="true"><span>Producto / Unidad / Categoría</span><span>Existencias y ajustes</span></div>
       <ul id="product-list" class="item-list"></ul>
       <p id="products-empty" class="empty" hidden>No hay productos.</p>
     </section>
 
-    <section class="panel" aria-labelledby="locations-title">
-      <h2 id="locations-title">Ubicaciones</h2>
+    <section id="sucursales" class="panel reveal" aria-labelledby="locations-title" tabindex="-1">
+      <div class="panel-heading"><div><span class="eyebrow">03 / Espacios</span><h2 id="locations-title">Sucursales en perspectiva</h2><p>Restaurantes iluminados, seleccionables también desde el listado.</p></div></div>
+      <div class="city-card">
+        <div class="city-toolbar"><strong>Maqueta urbana 3D</strong><label>Perspectiva<input aria-label="Perspectiva de la maqueta" data-city-tilt type="range" min="30" max="70" value="58"></label><label>Rotación<input aria-label="Rotación de la maqueta" data-city-rotate type="range" min="-180" max="180" value="-32"></label><button type="button" class="secondary" data-city-reset>Restablecer</button><button type="button" class="secondary" data-city-flat aria-pressed="false">Sin 3D</button></div>
+        <div class="map-stage"><div class="city-board"><div class="city-decor" aria-hidden="true"></div><div class="city-pins"></div></div></div>
+        <p class="city-selection" role="status">Cargando sucursales…</p>
+      </div>
+      <p class="city-note">Universo ficticio de Oplesktaurant. Edificios decorativos y posiciones x/y normalizadas para distribuir los destinos del catálogo.</p>
       <p class="item-meta">
-        Posición normalizada x/y (0–1) para el mapa estilizado de la landing.
+        Posición normalizada x/y (0–1) para la maqueta de la landing.
         Marca <em>is_demo</em> en las ubicaciones ficticias de demostración.
       </p>
+      <details class="create-details"><summary>+ Nueva sucursal</summary>
       <form id="location-form" class="row-form">
-        <input type="text" id="location-name" placeholder="Nombre" maxlength="200" required>
-        <input type="text" id="location-address" placeholder="Dirección" maxlength="300" required>
-        <input type="number" id="location-x" placeholder="x (0–1)" min="0" max="1" step="0.01" required>
-        <input type="number" id="location-y" placeholder="y (0–1)" min="0" max="1" step="0.01" required>
-        <label class="item-meta" style="display:flex;align-items:center;gap:.3rem;flex:0 0 auto;">
-          <input type="checkbox" id="location-demo" style="flex:0 0 auto;"> Demo
+        <label for="location-name">Nombre<input type="text" id="location-name" maxlength="200" required></label>
+        <label for="location-address">Dirección<input type="text" id="location-address" maxlength="300" required></label>
+        <label for="location-x">Posición x (0–1)<input type="number" id="location-x" min="0" max="1" step="0.01" required></label>
+        <label for="location-y">Posición y (0–1)<input type="number" id="location-y" min="0" max="1" step="0.01" required></label>
+        <label class="checkbox-label" for="location-demo">
+          <input type="checkbox" id="location-demo"> Datos ficticios de demostración
         </label>
         <button type="submit">Agregar</button>
       </form>
+      </details>
       <ul id="location-list" class="item-list"></ul>
       <p id="locations-empty" class="empty" hidden>No hay ubicaciones. Puedes crearlas aquí o ejecutar <code>seed-demo-locations</code>.</p>
     </section>
   </main>
+  <noscript><p class="admin-noscript">El panel requiere JavaScript para cargar datos y gestionar registros. No se muestran métricas de ejemplo. Actívalo para continuar.</p></noscript>
 
   <!-- Widget de chat: Nbapeh (con sesión). -->
-  <div class="chat-widget">
+  <div class="chat-widget" data-chat-context="admin">
     <section id="chat-panel" class="chat-panel" role="dialog" aria-modal="false"
              aria-labelledby="chat-title" hidden>
       <header class="chat-header">
@@ -130,6 +158,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="/static/js/chat.js"></script>
+  <script src="/static/js/city.js"></script>
   <script src="/static/js/admin.js"></script>
 </body>
 </html>

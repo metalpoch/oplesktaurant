@@ -1,4 +1,4 @@
-"""Oplestaurants - API Flask (sin Blueprints) y servido de frontend estático.
+"""Oplesktaurant - API Flask (sin Blueprints) y servido de frontend estático.
 
 Punto de entrada (con el intérprete del entorno virtual):
     python -m flask --app app db upgrade             # aplica migraciones
@@ -127,21 +127,21 @@ class RateLimiter:
 # real: son datos ficticios y se marcan como tales (`is_demo`).
 DEMO_LOCATIONS = (
     {
-        "name": "Oplestaurants Sucursal Fantasía",
+        "name": "Oplesktaurant Sucursal Fantasía",
         "address": "Calle de los Sabores Imaginarios 123, Villa Inventada",
         "pos_x": 0.22,
         "pos_y": 0.68,
         "is_demo": True,
     },
     {
-        "name": "Oplestaurants Sucursal Ensueño",
+        "name": "Oplesktaurant Sucursal Ensueño",
         "address": "Avenida de la Comida Soñada 45, Ciudad Nube",
         "pos_x": 0.55,
         "pos_y": 0.34,
         "is_demo": True,
     },
     {
-        "name": "Oplestaurants Sucursal Quimera",
+        "name": "Oplesktaurant Sucursal Quimera",
         "address": "Paseo del Sabor Inexistente 7, Pueblo Espejismo",
         "pos_x": 0.80,
         "pos_y": 0.72,
@@ -456,8 +456,19 @@ def _register_api(app):
                 429,
             )
         data = _require_json()
+        context = data.get("context")
+        if "context" in data and (
+            not isinstance(context, str) or context not in ("public", "admin")
+        ):
+            return jsonify({"error": "El contexto debe ser public o admin."}), 400
         user = current_user()
-        identity = chat_module.NBAPEH if user is not None else chat_module.MESI
+        if context == "admin" and user is None:
+            return jsonify({"error": "La sesión del panel ha expirado. Inicia sesión de nuevo."}), 401
+        # Sin contexto se conserva el contrato anterior basado en la sesión.
+        identity = (
+            chat_module.MESI if context == "public"
+            else chat_module.NBAPEH if user is not None else chat_module.MESI
+        )
         try:
             reply = chat_module.generate_reply(
                 identity, data.get("message"), data.get("history")

@@ -1,4 +1,4 @@
-"""Modelos de datos de Oplestaurants.
+"""Modelos de datos de Oplesktaurant.
 
 Incluye el seguimiento operativo (tareas e inventario), las cuentas de
 personal (``User``) y las ubicaciones de la cadena (``RestaurantLocation``).

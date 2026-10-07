@@ -1,4 +1,4 @@
-"""Pruebas del chat: identidad por sesión, sufijo de Mesi y errores."""
+"""Pruebas del chat: identidad por contexto, sufijo de Mr. Mesi sin S y errores."""
 
 import unittest
 from unittest import mock
@@ -39,7 +39,7 @@ class ChatTestCase(unittest.TestCase):
     def test_publico_es_mesi_y_termina_con_sufijo(self):
         with mock.patch(
             "chat._call_openrouter",
-            return_value="Hola amigo. Bienvenido a Oplestaurants.",
+            return_value="Hola amigo. Bienvenido a Oplesktaurant.",
         ):
             res = self.client.post("/api/chat", json={"message": "hola"})
         self.assertEqual(res.status_code, 200)
@@ -74,6 +74,55 @@ class ChatTestCase(unittest.TestCase):
         body = res.get_json()
         self.assertEqual(body["identity"], "nbapeh")
         self.assertNotIn("que mira bobo", body["reply"])
+
+    def test_contexto_publico_autenticado_usa_prompt_mesi_y_sufijo(self):
+        login(self.client)
+        with mock.patch("chat._call_openrouter", return_value="Hola.") as provider:
+            response = self.client.post("/api/chat", json={"context": "public", "message": "hola", "identity": "nbapeh"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"identity": "mesi", "reply": "Hola que mira bobo."})
+        self.assertIn("Eres Mr. Mesi sin S,", provider.call_args.args[0][0]["content"])
+
+    def test_contexto_admin_autenticado_usa_nbapeh(self):
+        login(self.client)
+        with mock.patch("chat._call_openrouter", return_value="Usa el panel.") as provider:
+            response = self.client.post("/api/chat", json={"context": "admin", "message": "hola"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"identity": "nbapeh", "reply": "Usa el panel."})
+        self.assertIn("Eres Nbapeh", provider.call_args.args[0][0]["content"])
+
+    def test_guest_no_puede_forzar_admin_y_no_llama_proveedor(self):
+        with mock.patch("chat._call_openrouter") as provider:
+            response = self.client.post("/api/chat", json={"context": "admin", "identity": "nbapeh", "message": "hola"})
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("error", response.get_json())
+        provider.assert_not_called()
+
+    def test_contextos_invalidos_rechazados_sin_proveedor(self):
+        with mock.patch("chat._call_openrouter") as provider:
+            for context in (None, 1, True, [], {}, "", "mesi", "Admin"):
+                with self.subTest(context=context):
+                    response = self.client.post("/api/chat", json={"context": context, "message": "hola"})
+                    self.assertEqual(response.status_code, 400)
+        provider.assert_not_called()
+
+    def test_guest_publico_ignora_identity_forzada_y_valida_mensaje(self):
+        with mock.patch("chat._call_openrouter", return_value="Hola.") as provider:
+            response = self.client.post("/api/chat", json={"context": "public", "identity": "nbapeh", "message": "hola"})
+            invalid = self.client.post("/api/chat", json={"context": "public", "message": ""})
+        self.assertEqual(response.get_json()["identity"], "mesi")
+        self.assertEqual(invalid.status_code, 400)
+        self.assertEqual(provider.call_count, 1)
+
+    def test_contextos_comparten_limite_y_validaciones_de_historial(self):
+        login(self.client)
+        with mock.patch("chat._call_openrouter", return_value="Hola.") as provider:
+            invalid = self.client.post("/api/chat", json={"context": "public", "message": "hola", "history": "incorrecto"})
+            self.assertEqual(invalid.status_code, 400)
+            responses = [self.client.post("/api/chat", json={"context": "public" if i % 2 else "admin", "message": "hola"}) for i in range(10)]
+        self.assertEqual([response.status_code for response in responses[:9]], [200] * 9)
+        self.assertEqual(responses[-1].status_code, 429)
+        self.assertEqual(provider.call_count, 9)
 
     def test_fallback_sin_configuracion_no_revela_datos(self):
         res = self.client.post("/api/chat", json={"message": "hola"})
@@ -114,6 +163,27 @@ class ChatTestCase(unittest.TestCase):
         self.assertEqual(
             res.get_json()["reply"], "3.14 es pi que mira bobo"
         )
+
+    def test_mr_mesi_abreviatura_no_divide_nombre_y_preserva_sufijo(self):
+        with mock.patch("chat._call_openrouter", return_value="Soy Mr. Mesi. Bienvenido a Oplesktaurant."):
+            res = self.client.post("/api/chat", json={"message": "hola"})
+        self.assertEqual(res.get_json()["identity"], "mesi")
+        self.assertEqual(res.get_json()["reply"], "Soy Mr. Mesi que mira bobo. Bienvenido a Oplesktaurant que mira bobo.")
+
+    def test_nombre_literal_extendido_no_se_divide_y_preserva_sufijo(self):
+        with mock.patch("chat._call_openrouter", return_value="Soy Mr. Mesi sin S. Bienvenido a Oplesktaurant."):
+            res = self.client.post("/api/chat", json={"context": "public", "message": "hola"})
+        self.assertEqual(res.get_json()["identity"], "mesi")
+        self.assertEqual(res.get_json()["reply"], "Soy Mr. Mesi sin S que mira bobo. Bienvenido a Oplesktaurant que mira bobo.")
+
+    def test_prompts_nueva_marca_y_universo_ficticio(self):
+        from chat import MESI, NBAPEH, system_prompt_for
+        for identity in (MESI, NBAPEH):
+            prompt = system_prompt_for(identity)
+            self.assertIn("Oplesktaurant", prompt)
+            self.assertIn("ficticios", prompt)
+            self.assertNotIn("Oplestaurants", prompt)
+        self.assertIn("Eres Mr. Mesi sin S,", system_prompt_for(MESI))
 
     def test_mesi_sufijo_con_cierre_de_comilla(self):
         # El cierre de comilla tras la puntuación no debe impedir el corte.

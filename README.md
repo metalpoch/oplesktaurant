@@ -1,4 +1,4 @@
-# Oplestaurants
+# Oplesktaurant
 
 Cadena de restaurantes (demostración) con una **landing pública** y un
 **panel administrativo** para seguimiento de tareas e inventario.
@@ -7,7 +7,11 @@ Cadena de restaurantes (demostración) con una **landing pública** y un
 - Base de datos: PostgreSQL vía URI por variable de entorno.
 - Frontend: HTML, CSS y JavaScript vanilla (sin Jinja ni frameworks) servido por Flask.
 - Sesiones Flask firmadas y autenticación por email/contraseña (hash Werkzeug).
-- Asistentes de chat: **Mesi** (público) y **Nbapeh** (panel), servidos por el backend.
+- Asistentes de chat: **Mr. Mesi sin S** (público) y **Nbapeh** (panel), servidos por el backend.
+
+El nombre visible es **Oplesktaurant**. Por compatibilidad, los ejemplos de URI
+y los tags locales de Docker mantienen `oplestaurants`; no se renombra ninguna
+base de datos ni imagen existente. La identidad API del chat sigue siendo `mesi`.
 
 ## Requisitos
 
@@ -159,7 +163,7 @@ protegido. La cookie de sesión es `httpOnly` y `SameSite=Lax`, y se puede forza
 
 ## Ubicaciones de demostración (datos ficticios)
 
-El mapa de la landing usa posiciones **normalizadas** `x`/`y` (0–1), no
+La maqueta urbana de la landing usa posiciones **normalizadas** `x`/`y` (0–1), no
 coordenadas geográficas. Las tres ubicaciones de ejemplo son **datos ficticios
 de demostración** (calles inventadas, marcadas con `is_demo`):
 
@@ -170,6 +174,59 @@ python -m flask --app app seed-demo-locations
 - Es **idempotente**: solo inserta las que faltan (identificadas por dirección).
 - Es **opt-in**: no se ejecuta al importar la app ni al migrar.
 - Sin seed, la landing muestra un **empty state** y el listado vacío.
+
+## Interfaz y alcance visual
+
+- Landing editorial negro, fucsia y morado con diorama de restaurante: pabellón
+  luminoso, fachada con el nombre completo Oplesktaurant, terraza, mesas,
+  plataforma volumétrica y órbita. Emblema gastronómico SVG local compartido
+  con login y panel; ya no hay monolito con una letra aislada. Sin fuentes
+  remotas, librerías JS ni nuevos servicios.
+- Panel con navegación a resumen, operaciones, inventario y sucursales; KPIs
+  enlazados, donut del estado actual de tareas y barras del número de productos
+  por categoría. No representan ventas, tendencias ni historial de finalización.
+- Registro de tareas con su fecha de creación; listas densas, formularios
+  secundarios desplegables y edición etiquetada. Conserva CRUD y ajustes por unidad.
+- Cobertura del inventario: cuenta referencias con `quantity = 0` y con cantidad
+  mayor que cero; filtro para las primeras. Nunca suma cantidades de unidades
+  dispares ni inventa un umbral de stock.
+- Maqueta interactiva únicamente en el panel: edificios con caras CSS y altura en Z,
+  `perspective` y `preserve-3d`, restaurantes iluminados seleccionables, controles
+  de perspectiva, rotación, reset y modo sin 3D. El listado funciona sin efectos
+  y permite seleccionar incluso posiciones superpuestas; las posiciones inválidas
+  se omiten en la escena, sin fabricar coordenadas.
+- **Universo ficticio de Oplesktaurant:** todos los restaurantes y ubicaciones
+  son ficticios por definición del proyecto. No se busca una ciudad real ni se
+  contempla integración satelital/cartográfica. `is_demo` se conserva intacto
+  como dato existente de la API; no determina si un destino público es real.
+- Paisaje público a ancho completo, sin tarjeta, tablero-isla ni selección:
+  suelo extendido de 2400 × 1700 px, 70 volúmenes decorativos de cinco caras,
+  seis pabellones luminosos, ventanas con variación suave de opacidad (9 s),
+  deriva ambiental CSS (32 s) y tres partículas. Gradientes funden el paisaje
+  con el fondo y protegen el texto en primer plano. La sección recorta el
+  decorado deliberadamente sin generar desplazamiento horizontal en la página.
+- Las capas decorativas usan `aria-hidden`, `inert` y `pointer-events: none`;
+  no contienen controles. No usan `fitScene` ni los registros de la API. Sin
+  JavaScript hay un paisaje estático limitado; sin soporte 3D queda un fondo
+  atmosférico. El hero conserva su diorama de restaurante.
+- Control visible **Pausar ambiente**: pausa todas las animaciones decorativas,
+  incluido hero y partículas. Respeta `prefers-reduced-motion`, conserva la pausa
+  manual y suspende animaciones al ocultar la pestaña. Sin bucle de render JS.
+  La raíz del hero permanece opaca y sin animación de entrada, incluso sin JS
+  o al pausar inmediatamente. Solo una fachada por edificio anima sus ventanas
+  (70 animaciones, antes 280). `IntersectionObserver` pausa localmente el paisaje
+  fuera de pantalla; si no está disponible, siguen vigentes pausa manual,
+  movimiento reducido y pestaña oculta, sin añadir sondeo ni bucles alternativos.
+- Tarjetas de destinos ficticios de lectura con nombre como información
+  principal; dirección en detalles secundarios. Sin jerga de coordenadas o API
+  en el sitio público. Si el catálogo está vacío, la escenografía sigue visible
+  y el catálogo muestra su estado vacío: no se fabrican registros ni destinos.
+- Animación de entrada y actualización de gráficas/valores reales, hover con
+  profundidad, movimiento reducido y pausa de animaciones al ocultar la página.
+  Sin bucle `requestAnimationFrame` permanente ni actualización automática.
+  Si falla una consulta, el panel avisa que los datos pueden estar desactualizados.
+- La carga de datos y el CRUD actuales requieren JavaScript; el aviso `noscript`
+  explica esa limitación. La decoración no bloquea el login ni la navegación.
 
 ## Ejecutar
 
@@ -240,7 +297,7 @@ Públicas (solo lectura / chat):
 | GET | `/api/session` | Estado de sesión + `csrf_token` para el frontend. |
 | POST | `/api/session` | Login (requiere cabecera `X-CSRF-Token`). |
 | DELETE | `/api/session` | Logout (requiere `X-CSRF-Token`). |
-| POST | `/api/chat` | Chat: Mesi si no hay sesión, Nbapeh si la hay. Rate limit por IP (`429`). |
+| POST | `/api/chat` | Chat por contexto: `public` → Mr. Mesi sin S; `admin` → Nbapeh con sesión. Rate limit por IP (`429`). |
 
 Administrativas (requieren sesión; las que modifican estado requieren además
 `X-CSRF-Token`):
@@ -272,13 +329,30 @@ respuesta del login). Sin token válido se responde `403`.
 
 ## Asistentes de chat
 
-- **Mesi**: asistente público de la landing. Carismático y orientado a atraer
+El widget declara `data-chat-context="public"` en la landing y `"admin"` en el
+panel. Envía ese contexto en cada POST: **la landing siempre usa Mr. Mesi sin S, incluso
+con sesión iniciada**. El contexto `admin` exige autenticación (401 JSON si falta
+o expira), antes de llamar al proveedor. Contextos distintos, nulos o de otro tipo
+se rechazan con 400; el campo `identity` no permite elegir asistente. No se usa
+Referer. Para clientes anteriores, omitir `context` conserva la selección por sesión.
+
+El frontend fija nombre, placeholder e historial por página, sin consultar sesión
+desde el widget ni aceptar cambios de identidad en respuestas inesperadas. Un 401
+del panel informa de la sesión expirada y bloquea nuevos envíos hasta recargar tras
+iniciar sesión; nunca mezcla ese historial con Mr. Mesi sin S. El nombre público
+confirmado es el literal **Mr. Mesi sin S**; la identidad API sigue siendo `mesi`.
+
+Los tokens de superficies, bordes, luces, ventanas, tejados y gráficas viven en
+`style.css`. Se comprueba el contraste de pares principales: texto ≥4.5:1 y
+controles/gráficas ≥3:1; esto no sustituye una auditoría visual completa sobre 3D.
+
+- **Mr. Mesi sin S**: asistente público de la landing. Carismático y orientado a atraer
   clientes. Cada oración termina literalmente con `que mira bobo`; además del
   prompt, un postprocesado determinista garantiza el sufijo aunque el modelo lo
   omita.
 - **Nbapeh**: dentro del panel autenticado, ayudante de uso de la plataforma.
 
-Ambos hablan solo de Oplestaurants, no inventan sucursales/promociones/precios y
+Ambos hablan solo del universo ficticio de Oplesktaurant, no inventan sucursales/promociones/precios y
 no ejecutan acciones ni generan código. La llamada a OpenRouter ocurre **solo en
 el backend** (librería estándar), con timeout y límites de longitud/contexto, sin
 persistir conversaciones ni usar herramientas. Si falta configuración o el
@@ -301,12 +375,26 @@ pruebas aisladas de migraciones (`tests/test_migrations.py`) que aplican
 `upgrade head` y `downgrade base` solo contra SQLite. No requieren pytest.
 
 Las pruebas de las funciones puras del frontend (resolución segura del `next`
-del login y avisos de datos ficticios) se ejecutan con Node si está disponible;
+del login, proyección normalizada y conteos del panel)
+se ejecutan con Node si está disponible;
 si no lo está, se omiten automáticamente.
 
 ```bash
 python -m unittest discover -s tests -v
+node --test tests/frontend_regressions.cjs
 ```
+
+Las regresiones Node también se invocan desde la suite Python. Ejecutan los
+callbacks reales de edición/cancelación con un DOM mínimo y respuestas HTTP
+controladas: verifican consultas fuera de orden y rechazo de posiciones vacías
+sin enviar PATCH. Comprueban la proyección geométrica de la maqueta en desktop
+y móvil, el ajuste por ancho y alto y el cambio de modo/redimensionado del panel,
+la recuperación del foco y selección compartida en admin. En público verifican
+el paisaje independiente de API vacía/fallida, ausencia de controles, pausa manual,
+cambios de movimiento reducido y branding de chat compatible con la clave `mesi`.
+También ejecutan la landing con registros `is_demo` mixtos para comprobar que
+todos se presentan como destinos ficticios sin alterar datos. No son
+pruebas de renderizado en navegador: la inspección visual/E2E sigue pendiente.
 
 Comprobación de sintaxis:
 
@@ -318,6 +406,7 @@ python -m py_compile app.py config.py models.py auth.py chat.py \
 node --check static/js/chat.js
 node --check static/js/landing.js
 node --check static/js/admin.js
+node --check static/js/city.js
 node --check static/js/auth.js
 ```
 
@@ -329,7 +418,7 @@ node --check static/js/auth.js
 ├── config.py           # .env, URI de DB, clave de sesión y OpenRouter
 ├── models.py           # Task, Product, User y RestaurantLocation + db
 ├── auth.py             # Sesión, login requerido y CSRF
-├── chat.py             # Mesi/Nbapeh y llamada a OpenRouter (backend)
+├── chat.py             # Mr. Mesi sin S/Nbapeh y llamada a OpenRouter (backend)
 ├── requirements.txt
 ├── .env.example
 ├── Dockerfile
@@ -340,11 +429,11 @@ node --check static/js/auth.js
 │       ├── ..._initial_schema_tasks_and_products.py
 │       └── ..._add_users_and_restaurant_locations.py
 ├── static/
-│   ├── index.html      # Landing pública (mapa + Mesi)
+│   ├── index.html      # Paisaje decorativo 3D + catálogo + Mr. Mesi sin S
 │   ├── login.html      # Acceso del personal
 │   ├── admin.html      # Panel (dashboard + CRUD + Nbapeh)
-│   ├── css/{style,landing,admin}.css
-│   └── js/{chat,landing,auth,admin}.js
+│   ├── css/{style,landing,admin,city}.css
+│   └── js/{chat,landing,auth,admin,city}.js
 └── tests/
     ├── test_api.py
     ├── test_auth.py
@@ -359,6 +448,6 @@ node --check static/js/auth.js
 ## Fuera de alcance (MVP)
 
 Sin auto-registro público. El chat no ejecuta acciones ni modifica registros.
-El mapa usa posiciones normalizadas (no geográficas) y las ubicaciones de
-demostración son ficticias. No se inventan umbrales de stock, ventas, ingresos
+La ciudad es escenografía y todos los destinos son ficticios. No se inventan
+registros para rellenar escenas, umbrales de stock, ventas, ingresos
 ni métricas no derivadas de datos reales.

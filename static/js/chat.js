@@ -1,6 +1,6 @@
-/* Oplestaurants - widget de chat compartido.
+/* Oplesktaurant - widget de chat compartido.
  *
- * La identidad se decide en el servidor según la sesión: Mesi (público) o
+ * Contexto fijo de página: Mr. Mesi sin S (público incluso con sesión) o
  * Nbapeh (panel autenticado). El navegador nunca conoce la clave del proveedor
  * ni habla directamente con el servicio de IA.
  */
@@ -9,11 +9,11 @@
 
   var IDENTITIES = {
     mesi: {
-      name: "Mesi",
-      subtitle: "Asistente de Oplestaurants",
-      title: "Mesi",
+      name: "Mr. Mesi sin S",
+      subtitle: "Asistente de Oplesktaurant",
+      title: "Mr. Mesi sin S",
       input: "Escribe un mensaje",
-      placeholder: "Escríbeme y te cuento sobre Oplestaurants."
+      placeholder: "Escríbeme y te cuento sobre Oplesktaurant."
     },
     nbapeh: {
       name: "Nbapeh",
@@ -36,13 +36,6 @@
     el._timer = window.setTimeout(function () { el.hidden = true; }, 3500);
   }
 
-  function fetchSession() {
-    return fetch("/api/session", { headers: { "Accept": "application/json" } })
-      .then(function (res) { return res.json().catch(function () { return {}; }); })
-      .then(function (data) { return data || {}; })
-      .catch(function () { return {}; });
-  }
-
   function init() {
     var toggle = document.getElementById("chat-toggle");
     var panel = document.getElementById("chat-panel");
@@ -59,23 +52,28 @@
 
     var history = [];
     var busy = false;
-    var identityKey = "mesi";
+    var widget = panel.closest("[data-chat-context]");
+    var context = widget && widget.getAttribute("data-chat-context");
+    if (context !== "public" && context !== "admin") return;
+    var identityKey = context === "admin" ? "nbapeh" : "mesi";
+    var expired = false;
 
-    function applyIdentity(key) {
-      identityKey = IDENTITIES[key] ? key : "mesi";
+    function applyIdentity() {
       var cfg = IDENTITIES[identityKey];
       if (titleEl) titleEl.textContent = cfg.title;
       if (subtitleEl) subtitleEl.textContent = cfg.subtitle;
       if (labelEl) labelEl.textContent = cfg.name;
       if (input) input.setAttribute("placeholder", cfg.input);
-      if (toggle) toggle.setAttribute("aria-label", "Abrir asistente " + cfg.name);
+      if (toggle) toggle.setAttribute("aria-label", (panel.hidden ? "Abrir asistente " : "Cerrar asistente ") + cfg.name);
       if (input) input.setAttribute("aria-label", "Mensaje para " + cfg.name);
+      var placeholder = messages.querySelector(".chat-placeholder");
+      if (placeholder) placeholder.textContent = cfg.placeholder;
     }
 
     function openPanel() {
       panel.hidden = false;
       toggle.setAttribute("aria-expanded", "true");
-      toggle.setAttribute("aria-label", "Cerrar asistente");
+      toggle.setAttribute("aria-label", "Cerrar asistente " + IDENTITIES[identityKey].name);
       if (input) input.focus();
     }
 
@@ -98,8 +96,8 @@
 
     function setBusy(value) {
       busy = value;
-      if (input) input.disabled = value;
-      if (send) send.disabled = value;
+      if (input) input.disabled = value || expired;
+      if (send) send.disabled = value || expired;
     }
 
     toggle.addEventListener("click", function () {
@@ -114,7 +112,7 @@
     if (form) {
       form.addEventListener("submit", function (evt) {
         evt.preventDefault();
-        if (busy || !input) return;
+        if (busy || expired || !input) return;
         var text = input.value.trim();
         if (!text) return;
         appendBubble("user", text);
@@ -127,23 +125,27 @@
         fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Accept": "application/json" },
-          body: JSON.stringify({ message: text, history: history.slice(0, -1) })
+          body: JSON.stringify({ context: context, message: text, history: history.slice(0, -1) })
         }).then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (data) {
             if (!res.ok) {
+              if (res.status === 401 && context === "admin") {
+                expired = true;
+                throw new Error("La sesión del panel ha expirado. Inicia sesión de nuevo para hablar con Nbapeh.");
+              }
               throw new Error((data && data.error) || ("Error HTTP " + res.status));
             }
             return data;
           });
         }).then(function (data) {
-          if (data.identity) applyIdentity(data.identity);
+          if (data.identity && data.identity !== identityKey) throw new Error("La respuesta no corresponde a este asistente. Inténtalo de nuevo.");
           var reply = data.reply || "…";
           appendBubble("assistant", reply);
           history.push({ role: "assistant", content: reply });
           if (history.length > MAX_HISTORY) history = history.slice(-MAX_HISTORY);
           if (statusEl) statusEl.textContent = "";
         }).catch(function (err) {
-          if (statusEl) statusEl.textContent = "";
+          if (statusEl) statusEl.textContent = err.message || "No se pudo enviar el mensaje.";
           toast(err.message || "No se pudo enviar el mensaje.", true);
         }).then(function () {
           setBusy(false);
@@ -151,9 +153,7 @@
       });
     }
 
-    fetchSession().then(function (data) {
-      applyIdentity(data && data.authenticated ? "nbapeh" : "mesi");
-    });
+    applyIdentity();
 
     window.OpleChat = { open: openPanel, close: closePanel };
   }

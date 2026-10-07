@@ -1,18 +1,33 @@
-/* Oplestaurants - estilos compartidos (base, chat y utilidades). */
+/* Oplesktaurant - estilos compartidos (base, chat y utilidades). */
 
 :root {
-  --bg: #f6f7fb;
-  --panel: #ffffff;
-  --ink: #172033;
-  --muted: #64748b;
-  --line: #e2e6ee;
-  --accent: #e11d48;
-  --accent-2: #f59e0b;
-  --accent-3: #0ea5e9;
-  --accent-4: #22c55e;
-  --accent-ink: #ffffff;
-  --ok: #15803d;
-  --danger: #b91c1c;
+  --bg: #08060d;
+  --panel: #100a18;
+  --ink: #f7efff;
+  --muted: #c8b8d7;
+  --line: #9279a6;
+  --accent: #ff70d7;
+  --accent-2: #c4a3ff;
+  --accent-3: #dfc7ff;
+  --accent-4: #a993ef;
+  --accent-ink: #16091e;
+  --ok: #dfc7ff;
+  --danger: #8c244b;
+  --surface: #171020;
+  --surface-raised: #281936;
+  --surface-hover: #352244;
+  --scene-wall: #412854;
+  --scene-roof: #785298;
+  --scene-edge: #bd98d8;
+  --scene-window: #e1b8ed;
+  --scene-window-warm: #ffb0de;
+  --scene-ground: #23132f;
+  --scene-street: #120b1b;
+  --glow-rgb: 233, 72, 202;
+  --violet-rgb: 153, 101, 234;
+  --chart-pending: #ff70d7;
+  --chart-completed: #c4a3ff;
+  --chart-track: #332340;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
   --radius: 12px;
 }
@@ -66,9 +81,9 @@ button:hover,
 .button:hover { filter: brightness(1.07); }
 
 button.secondary,
-.button.secondary { background: #e2e8f0; color: var(--ink); }
+.button.secondary { background: var(--surface-raised); color: var(--ink); border: 1px solid var(--line); }
 button.danger,
-.button.danger { background: var(--danger); }
+.button.danger { background: var(--danger); color: #fff; }
 
 button:focus-visible,
 .button:focus-visible,
@@ -86,7 +101,7 @@ input, select {
   padding: 0.5rem 0.6rem;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
 }
 
@@ -95,13 +110,13 @@ input, select {
   font-size: 0.75rem;
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
-  background: #fef3c7;
-  color: #92400e;
+  background: #3c1839;
+  color: #ffd2ec;
   white-space: nowrap;
 }
 
-.badge.completed { background: #dcfce7; color: var(--ok); }
-.badge.demo { background: #ede9fe; color: #6d28d9; }
+.badge.completed { background: #302044; color: var(--ok); }
+.badge.demo { background: #31203e; color: #e6cdff; white-space: normal; }
 
 .empty { color: var(--muted); font-style: italic; }
 
@@ -109,7 +124,7 @@ input, select {
   position: fixed;
   bottom: 1rem;
   left: 1rem;
-  background: var(--ink);
+  background: var(--surface-raised);
   color: #fff;
   padding: 0.6rem 0.9rem;
   border-radius: 8px;
@@ -119,7 +134,7 @@ input, select {
 }
 .toast.error { background: var(--danger); }
 
-/* ---- Widget de chat (Mesi / Nbapeh) ----------------------------------- */
+/* ---- Widget de chat (Mr. Mesi sin S / Nbapeh) ------------------------- */
 
 .chat-toggle {
   position: fixed;
@@ -168,7 +183,7 @@ input, select {
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.75rem 0.9rem;
-  background: linear-gradient(135deg, #172033, #312e81);
+  background: var(--surface-raised);
   color: #fff;
 }
 
@@ -212,13 +227,13 @@ input, select {
 }
 .chat-message.user {
   align-self: flex-end;
-  background: var(--accent-3);
+  background: #572653;
   color: #fff;
   border-bottom-right-radius: 3px;
 }
 .chat-message.assistant {
   align-self: flex-start;
-  background: #f1f5f9;
+  background: var(--surface-raised);
   color: var(--ink);
   border-bottom-left-radius: 3px;
 }
@@ -241,6 +256,37 @@ input, select {
   padding: 0.35rem 0.9rem 0.8rem;
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+[hidden] { display: none !important; }
+.brand { display: inline-flex; align-items: center; gap: .65rem; font-weight: 750; letter-spacing: -.04em; }
+.brand-mark { display: block; width: 2.5rem; height: 2.5rem; flex: none; }
+.eyebrow { color: var(--accent); text-transform: uppercase; font-size: .72rem; letter-spacing: .16em; font-weight: 700; }
+.skip-link:focus { position: fixed; width: auto; height: auto; clip: auto; margin: 1rem; padding: .8rem; background: var(--panel); z-index: 2000; }
+summary { cursor: pointer; }
+summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+button, .button { transition: transform .2s, background .2s; }
+button:hover, .button:hover { transform: translateY(-2px); }
+@keyframes enter { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.reveal { animation: enter .65s both; }
+.reveal.reveal-pending { animation: none; }
+.reveal:nth-child(2) { animation-delay: .08s; }
+.reveal:nth-child(3) { animation-delay: .16s; }
+.reveal:nth-child(4) { animation-delay: .24s; }
+body.page-hidden *, body.page-hidden *::before, body.page-hidden *::after { animation-play-state: paused !important; }
+/* Un único estado gobierna todas las capas decorativas (incluidos pseudo-elementos).
+   Sin JS quedan en reposo: no hay un ambiente sin control de pausa. */
+body:not(.ambient-ready) [data-ambient], body:not(.ambient-ready) [data-ambient]::before, body:not(.ambient-ready) [data-ambient]::after, body:not(.ambient-ready) [data-ambient] *,
+body:not(.ambient-ready) [data-ambient] *::before, body:not(.ambient-ready) [data-ambient] *::after,
+body.ambient-paused [data-ambient], body.ambient-paused [data-ambient]::before, body.ambient-paused [data-ambient]::after, body.ambient-paused [data-ambient] *,
+body.ambient-paused [data-ambient] *::before, body.ambient-paused [data-ambient] *::after { animation-play-state: paused !important; transition: none !important; }
+/* Pausa local por visibilidad, independiente de los estados globales del usuario. */
+.ambient-offscreen [data-ambient], .ambient-offscreen [data-ambient]::before, .ambient-offscreen [data-ambient]::after,
+.ambient-offscreen [data-ambient] *, .ambient-offscreen [data-ambient] *::before,
+.ambient-offscreen [data-ambient] *::after { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
 @media (max-width: 560px) {

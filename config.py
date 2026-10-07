@@ -1,4 +1,4 @@
-"""Configuración de Oplestaurants.
+"""Configuración de Oplesktaurant.
 
 La URI de base de datos y las credenciales se obtienen de variables de
 entorno, sin valores secretos embebidos. Se admite

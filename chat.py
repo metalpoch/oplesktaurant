@@ -1,4 +1,4 @@
-"""Asistentes de chat de Oplestaurants (Mesi y Nbapeh).
+"""Asistentes de chat de Oplesktaurant (Mr. Mesi sin S y Nbapeh).
 
 La llamada al proveedor (OpenRouter) se hace **solo en el backend** con la
 librería estándar; la clave y el modelo nunca llegan al navegador. No se
@@ -7,7 +7,7 @@ persisten conversaciones ni se usan herramientas/function calling.
 - ``mesi``: asistente público de la landing, orientado a atraer clientes.
 - ``nbapeh``: ayudante de uso de la plataforma dentro del panel autenticado.
 
-Mesi debe terminar cada oración literalmente con ``que mira bobo``. Además de
+Mr. Mesi sin S debe terminar cada oración con ``que mira bobo``. Además de
 indicarlo en el prompt de sistema, se aplica un postprocesado determinista que
 garantiza el sufijo aunque el modelo lo omita.
 """
@@ -34,23 +34,26 @@ NEUTRAL_FALLBACK = (
 )
 
 MESI_SYSTEM_PROMPT = (
-    "Eres Mesi, el asistente virtual de la cadena de restaurantes "
-    "Oplestaurants. Eres carismática, amable, cercana y orientada a atraer "
-    "clientes y animarles a visitar Oplestaurants. Hablas siempre en español. "
+    "Eres Mr. Mesi sin S, el asistente virtual de Oplesktaurant. "
+    "Eres carismático, amable y cercano. Invitas a descubrir su universo "
+    "y a conversar sobre sus espacios imaginados. Hablas siempre en español. "
     "REGLA OBLIGATORIA E INQUEBRANTABLE: cada oración que escribas debe "
     "terminar literalmente con la frase 'que mira bobo'. "
-    "Solo hablas de Oplestaurants y de invitaciones a visitar la cadena. "
-    "No inventas sucursales reales, promociones, precios, horarios ni datos "
-    "que no se te hayan dado. Si se mencionan ubicaciones de demostración, "
-    "debes decir claramente que son datos ficticios de demostración. "
+    "Solo hablas de Oplesktaurant. Todos sus restaurantes y ubicaciones "
+    "son ficticios: nunca sugieras que son sucursales reales. "
+    "La ciudad es escenografía, no un mapa ni un servicio de búsqueda. "
+    "No inventas registros, promociones, precios, horarios ni datos "
+    "que no se te hayan dado. "
     "No escribes código, no ejecutas acciones y no pides ejecutar código."
 )
 
 NBAPEH_SYSTEM_PROMPT = (
     "Eres Nbapeh, el ayudante de uso de la plataforma del panel de "
-    "Oplestaurants. Hablas siempre en español, de forma clara y breve. "
+    "Oplesktaurant. Hablas siempre en español, de forma clara y breve. "
     "Ayudas al personal a entender cómo usar el panel (tareas, inventario, "
-    "ubicaciones y el resumen), siempre en el contexto de Oplestaurants. "
+    "ubicaciones y el resumen), siempre en el contexto de Oplesktaurant. "
+    "Todos los restaurantes y ubicaciones son ficticios; no sugieras "
+    "que el paisaje decorativo representa sucursales reales. "
     "No inventas datos. No ejecutas acciones, no modificas registros, no "
     "generas ni ejecutas código y no usas herramientas. Si no sabes algo, "
     "dilo con honestidad."
@@ -99,7 +102,13 @@ def ensure_mesi_suffix(text):
     parts = []
     position = 0
     for match in _SENTENCE_END_RE.finditer(text):
-        parts.append(match.group(0))
+        # Mr. es una abreviatura del nombre, no una oración independiente.
+        if (
+            re.search(r"\bMr\.$", match.group(0), re.IGNORECASE)
+            and re.match(r"\s+Mesi\b", text[match.end():], re.IGNORECASE)
+        ):
+            continue
+        parts.append(text[position:match.end()])
         position = match.end()
     remainder = text[position:].strip()
     if remainder:

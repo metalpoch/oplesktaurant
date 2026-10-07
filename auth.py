@@ -1,4 +1,4 @@
-"""Autenticación por sesión y protección CSRF para Oplestaurants.
+"""Autenticación por sesión y protección CSRF para Oplesktaurant.
 
 Sin auto-registro público: las cuentas se crean con el comando
 ``create-admin`` y la contraseña se guarda como hash Werkzeug.
