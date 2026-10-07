@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acceso del personal · Oplestaurants</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="login-page">
+  <main class="login-card">
+    <h1>Acceso del personal</h1>
+    <p class="sub">Panel administrativo de Oplestaurants. Sin auto-registro: las cuentas se crean con el comando <code>create-admin</code>.</p>
+    <form id="login-form" novalidate>
+      <label>
+        Email
+        <input type="email" id="login-email" name="email" autocomplete="username" required maxlength="255">
+      </label>
+      <label>
+        Contraseña
+        <input type="password" id="login-password" name="password" autocomplete="current-password" required>
+      </label>
+      <p class="login-error" id="login-error" role="alert"></p>
+      <button type="submit" id="login-submit">Entrar</button>
+    </form>
+    <a class="login-back" href="/">← Volver a la landing</a>
+  </main>
+  <script src="/static/js/auth.js"></script>
+</body>
+</html>

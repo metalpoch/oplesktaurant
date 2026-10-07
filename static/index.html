@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Oplestaurants · Sabor que se imagina</title>
+  <meta name="description" content="Oplestaurants: una cadena de restaurantes colorida y cercana. Mapa interactivo estilizado con las ubicaciones de la cadena; las de demostración se marcan como ficticias.">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/landing.css">
+</head>
+<body class="landing">
+  <a class="visually-hidden" href="#mapa">Saltar al mapa</a>
+
+  <nav class="landing-nav" aria-label="Principal">
+    <span class="brand"><span class="brand-mark" aria-hidden="true">O</span> Oplestaurants</span>
+    <div class="nav-links">
+      <a class="nav-link" href="#mapa">Mapa</a>
+      <a class="nav-link" href="#visitanos">Visítanos</a>
+      <a class="button secondary" href="/login">Acceso personal</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <span class="hero-eyebrow">Cadena de restaurantes</span>
+      <h1>Sabores que se<br>imaginan y se disfrutan.</h1>
+      <p class="lead">
+        Bienvenido a Oplestaurants. Descubre nuestras espacios, explora el mapa
+        estilizado de la cadena y anímate a visitarnos. Cada visita es una
+        experiencia colorida.
+      </p>
+      <div class="hero-actions">
+        <a class="button" href="#mapa">Explora el mapa</a>
+        <button type="button" class="button ghost" id="hero-chat-open">Habla con Mesi</button>
+      </div>
+    </div>
+    <div class="hero-art" role="img" aria-label="Ilustración decorativa de un plato servido en Oplestaurants">
+      <div class="plate" aria-hidden="true"></div>
+      <div class="dish" aria-hidden="true">🍽️</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" id="mapa" aria-labelledby="mapa-title">
+      <div class="section-head">
+        <h2 id="mapa-title">Mapa de la cadena</h2>
+        <p>
+          Mapa 3D estilizado e isométrico. Los pines se colocan con posiciones
+          normalizadas (x/y) guardadas para cada ubicación; no es un mapa
+          geográfico. Las ubicaciones marcadas como de demostración se etiquetan
+          como datos ficticios.
+        </p>
+      </div>
+
+      <div class="map-card">
+        <div class="map-stage">
+          <svg viewBox="0 0 1000 600" role="img" aria-labelledby="map-svg-title map-svg-desc">
+            <title id="map-svg-title">Mapa isométrico de Oplestaurants</title>
+            <desc id="map-svg-desc">Escena decorativa con edificios y pines que representan las ubicaciones de la cadena.</desc>
+            <defs>
+              <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#e0f2fe"/>
+                <stop offset="100%" stop-color="#fef9c3"/>
+              </linearGradient>
+              <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#86efac"/>
+                <stop offset="100%" stop-color="#22c55e"/>
+              </linearGradient>
+            </defs>
+            <rect width="1000" height="600" fill="url(#sky)"/>
+            <ellipse cx="500" cy="520" rx="470" ry="120" fill="#bbf7d0" opacity="0.7"/>
+            <polygon points="500,120 940,360 500,600 60,360" fill="url(#grass)" opacity="0.95"/>
+            <polygon points="500,120 940,360 500,600 60,360" fill="none" stroke="#16a34a" stroke-width="3" opacity="0.5"/>
+            <line x1="120" y1="360" x2="880" y2="360" stroke="#fde68a" stroke-width="8" opacity="0.7"/>
+            <line x1="500" y1="150" x2="500" y2="570" stroke="#fde68a" stroke-width="8" opacity="0.7"/>
+
+            <!-- Bloques isométricos decorativos -->
+            <g stroke="#0f172a" stroke-width="2" stroke-opacity="0.15">
+              <g transform="translate(250,250)">
+                <polygon points="0,60 60,30 120,60 60,90" fill="#fca5a5"/>
+                <polygon points="0,60 0,10 60,-20 60,30" fill="#f87171"/>
+                <polygon points="60,30 60,-20 120,10 120,60" fill="#ef4444"/>
+              </g>
+              <g transform="translate(600,220)">
+                <polygon points="0,70 70,35 140,70 70,105" fill="#93c5fd"/>
+                <polygon points="0,70 0,10 70,-25 70,35" fill="#60a5fa"/>
+                <polygon points="70,35 70,-25 140,10 140,70" fill="#3b82f6"/>
+              </g>
+              <g transform="translate(400,380)">
+                <polygon points="0,55 55,27 110,55 55,82" fill="#fcd34d"/>
+                <polygon points="0,55 0,12 55,-16 55,27" fill="#fbbf24"/>
+                <polygon points="55,27 55,-16 110,12 110,55" fill="#f59e0b"/>
+              </g>
+              <g transform="translate(690,390)">
+                <polygon points="0,50 50,25 100,50 50,75" fill="#c4b5fd"/>
+                <polygon points="0,50 0,14 50,-11 50,25" fill="#a78bfa"/>
+                <polygon points="50,25 50,-11 100,14 100,50" fill="#8b5cf6"/>
+              </g>
+            </g>
+
+            <g id="map-pins"></g>
+          </svg>
+        </div>
+
+        <div class="map-legend">
+          <span id="map-demo-legend" hidden><span class="badge demo">Datos ficticios de demostración</span></span>
+          <span id="map-count" role="status">Cargando ubicaciones…</span>
+        </div>
+
+        <ul class="location-list" id="locations-list" aria-label="Listado de ubicaciones"></ul>
+        <p class="empty" id="locations-empty" hidden>
+          Aún no hay ubicaciones cargadas. El panel administrativo puede añadirlas
+          o ejecutar el comando <code>seed-demo-locations</code>.
+        </p>
+
+        <p class="demo-note" id="map-demo-note" hidden>
+          Las ubicaciones etiquetadas como <strong>datos ficticios de
+          demostración</strong> usan nombres y direcciones inventados; no
+          corresponden a sucursales reales. Las demás son ubicaciones reales de
+          la cadena.
+        </p>
+
+        <noscript>
+          <p class="demo-note">
+            El mapa interactivo necesita JavaScript. Puedes consultar el listado
+            de ubicaciones en el panel de administración
+            (<a href="/admin">/admin</a>) o mediante el endpoint público
+            <code>/api/locations</code>. Las ubicaciones con <code>is_demo: true</code>
+            contienen datos ficticios de demostración.
+          </p>
+        </noscript>
+      </div>
+    </section>
+
+    <section class="cta-band" id="visitanos" aria-labelledby="cta-title">
+      <div>
+        <h2 id="cta-title">¿Te apetece una visita?</h2>
+        <p>Encuentra tu Oplestaurants más cercano en el mapa y ven a disfrutar.</p>
+      </div>
+      <a class="button secondary" href="#mapa">Ver ubicaciones</a>
+    </section>
+  </main>
+
+  <footer class="landing-footer">
+    <p>Oplestaurants · Demostración.</p>
+  </footer>
+
+  <!-- Widget de chat: Mesi (público) / Nbapeh (con sesión). -->
+  <div class="chat-widget">
+    <section id="chat-panel" class="chat-panel" role="dialog" aria-modal="false"
+             aria-labelledby="chat-title" hidden>
+      <header class="chat-header">
+        <div class="chat-heading">
+          <h2 id="chat-title">Mesi</h2>
+          <p class="chat-subtitle" id="chat-subtitle">Asistente de Oplestaurants</p>
+        </div>
+        <button type="button" id="chat-close" class="chat-close" aria-label="Cerrar asistente">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41 6.3 6.3-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.3z"/>
+          </svg>
+        </button>
+      </header>
+      <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Conversación">
+        <p class="chat-placeholder">Escríbeme y te cuento sobre Oplestaurants.</p>
+      </div>
+      <form class="chat-form" id="chat-form">
+        <label class="visually-hidden" for="chat-input">Mensaje para Mesi</label>
+        <input type="text" id="chat-input" placeholder="Escribe un mensaje" autocomplete="off" maxlength="1000">
+        <button type="submit" id="chat-send">Enviar</button>
+      </form>
+      <p class="chat-status" id="chat-status" role="status"></p>
+    </section>
+    <button type="button" id="chat-toggle" class="chat-toggle" aria-expanded="false"
+            aria-controls="chat-panel" aria-label="Abrir asistente">
+      <svg class="chat-toggle-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M20 2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4l4 4 4-4h4a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/>
+      </svg>
+      <span class="chat-toggle-label" id="chat-toggle-label">Mesi</span>
+    </button>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="/static/js/chat.js"></script>
+  <script src="/static/js/landing.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+/* Oplestaurants - panel administrativo. */
+
+body.admin { background: var(--bg); }
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem clamp(1rem, 4vw, 2rem);
+  background: linear-gradient(135deg, #172033, #312e81);
+  color: #fff;
+}
+.admin-topbar .brand { color: #fff; }
+.admin-topbar .admin-user { font-size: 0.85rem; color: #cbd5e1; }
+.admin-topbar .admin-user strong { color: #fff; }
+.admin-topbar .top-actions { display: flex; align-items: center; gap: 0.6rem; }
+
+.admin-layout {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.2rem clamp(0.8rem, 3vw, 1.5rem) 4rem;
+  display: grid;
+  gap: 1.2rem;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem 1.2rem 1.2rem;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+.panel h2 { margin: 0 0 0.9rem; font-size: 1.05rem; }
+
+.metrics { display: flex; gap: 1rem; flex-wrap: wrap; }
+.metric {
+  flex: 1 1 150px;
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem;
+  text-align: center;
+}
+.metric-value { display: block; font-size: 1.9rem; font-weight: 800; color: var(--accent); }
+.metric-label { font-size: 0.82rem; color: var(--muted); }
+
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 1rem; }
+.chart-box { border: 1px solid var(--line); border-radius: 12px; padding: 0.8rem; background: #fff; }
+.chart-box h3 { margin: 0 0 0.6rem; font-size: 0.9rem; color: var(--muted); font-weight: 600; }
+.chart-box svg { width: 100%; height: auto; display: block; }
+.chart-empty { color: var(--muted); font-style: italic; font-size: 0.85rem; }
+
+.row-form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+
+.filter { margin-bottom: 0.6rem; font-size: 0.9rem; color: var(--muted); }
+.filter select { margin-left: 0.4rem; flex: 0 1 auto; }
+
+.item-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem;
+}
+.item-main { flex: 1; min-width: 0; }
+.item-title { font-weight: 600; word-break: break-word; }
+.item-desc { font-size: 0.85rem; color: var(--muted); word-break: break-word; }
+.item-meta { font-size: 0.8rem; color: var(--muted); }
+
+.actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.actions button { padding: 0.35rem 0.6rem; font-size: 0.82rem; }
+.qty-input { width: 5.5rem; flex: 0 0 auto; }
+.item input { flex: 1 1 120px; }
+
+/* ---- Login ------------------------------------------------------------ */
+
+body.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(800px 400px at 0% 0%, rgba(225, 29, 72, 0.2), transparent 60%),
+    radial-gradient(700px 400px at 100% 100%, rgba(14, 165, 233, 0.2), transparent 60%),
+    var(--bg);
+  padding: 1.5rem;
+}
+
+.login-card {
+  width: min(420px, 100%);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 1.6rem;
+}
+.login-card h1 { margin: 0 0 0.3rem; font-size: 1.4rem; }
+.login-card p.sub { margin: 0 0 1.2rem; color: var(--muted); font-size: 0.9rem; }
+.login-card form { display: grid; gap: 0.7rem; }
+.login-card label { font-size: 0.85rem; font-weight: 600; color: var(--muted); display: grid; gap: 0.25rem; }
+.login-card input { width: 100%; }
+.login-error { color: var(--danger); font-size: 0.85rem; min-height: 1.2em; margin: 0; }
+.login-back { display: inline-block; margin-top: 1rem; color: var(--muted); font-size: 0.85rem; }
+
+@media (max-width: 560px) {
+  .item { flex-wrap: wrap; }
+  .actions { width: 100%; justify-content: flex-end; }
+}

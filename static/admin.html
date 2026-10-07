@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel · Oplestaurants</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="admin">
+  <header class="admin-topbar">
+    <span class="brand">
+      <span class="brand-mark" aria-hidden="true">O</span> Oplestaurants · Panel
+    </span>
+    <div class="top-actions">
+      <span class="admin-user">Sesión: <strong id="admin-email">–</strong></span>
+      <a class="button secondary" href="/">Ver landing</a>
+      <button type="button" class="button danger" id="logout-btn">Salir</button>
+    </div>
+  </header>
+
+  <main class="admin-layout">
+    <section class="panel" aria-labelledby="dash-title">
+      <h2 id="dash-title">Resumen</h2>
+      <div class="metrics" id="dashboard">
+        <div class="metric"><span class="metric-value" id="m-pending">–</span><span class="metric-label">Tareas pendientes</span></div>
+        <div class="metric"><span class="metric-value" id="m-completed">–</span><span class="metric-label">Tareas completadas</span></div>
+        <div class="metric"><span class="metric-value" id="m-products">–</span><span class="metric-label">Productos</span></div>
+        <div class="metric"><span class="metric-value" id="m-locations">–</span><span class="metric-label">Ubicaciones</span></div>
+      </div>
+      <div class="charts">
+        <div class="chart-box">
+          <h3>Tareas por estado</h3>
+          <div id="chart-tasks" aria-live="polite"></div>
+        </div>
+        <div class="chart-box">
+          <h3>Productos por categoría</h3>
+          <div id="chart-products" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="tasks-title">
+      <h2 id="tasks-title">Tareas</h2>
+      <form id="task-form" class="row-form">
+        <input type="text" id="task-title" placeholder="Título de la tarea" maxlength="200" required>
+        <input type="text" id="task-description" placeholder="Descripción (opcional)">
+        <button type="submit">Agregar</button>
+      </form>
+      <div class="filter">
+        <label for="task-filter">Filtrar:</label>
+        <select id="task-filter">
+          <option value="">Todas</option>
+          <option value="pending">Pendientes</option>
+          <option value="completed">Completadas</option>
+        </select>
+      </div>
+      <ul id="task-list" class="item-list"></ul>
+      <p id="tasks-empty" class="empty" hidden>No hay tareas.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="products-title">
+      <h2 id="products-title">Inventario</h2>
+      <form id="product-form" class="row-form">
+        <input type="text" id="product-name" placeholder="Nombre del producto" maxlength="200" required>
+        <input type="text" id="product-category" placeholder="Categoría (opcional)">
+        <input type="text" id="product-unit" placeholder="Unidad (ej. kg, pieza)" maxlength="50" required>
+        <input type="number" id="product-quantity" placeholder="Cantidad" min="0" step="0.001" value="0">
+        <button type="submit">Agregar</button>
+      </form>
+      <ul id="product-list" class="item-list"></ul>
+      <p id="products-empty" class="empty" hidden>No hay productos.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="locations-title">
+      <h2 id="locations-title">Ubicaciones</h2>
+      <p class="item-meta">
+        Posición normalizada x/y (0–1) para el mapa estilizado de la landing.
+        Marca <em>is_demo</em> en las ubicaciones ficticias de demostración.
+      </p>
+      <form id="location-form" class="row-form">
+        <input type="text" id="location-name" placeholder="Nombre" maxlength="200" required>
+        <input type="text" id="location-address" placeholder="Dirección" maxlength="300" required>
+        <input type="number" id="location-x" placeholder="x (0–1)" min="0" max="1" step="0.01" required>
+        <input type="number" id="location-y" placeholder="y (0–1)" min="0" max="1" step="0.01" required>
+        <label class="item-meta" style="display:flex;align-items:center;gap:.3rem;flex:0 0 auto;">
+          <input type="checkbox" id="location-demo" style="flex:0 0 auto;"> Demo
+        </label>
+        <button type="submit">Agregar</button>
+      </form>
+      <ul id="location-list" class="item-list"></ul>
+      <p id="locations-empty" class="empty" hidden>No hay ubicaciones. Puedes crearlas aquí o ejecutar <code>seed-demo-locations</code>.</p>
+    </section>
+  </main>
+
+  <!-- Widget de chat: Nbapeh (con sesión). -->
+  <div class="chat-widget">
+    <section id="chat-panel" class="chat-panel" role="dialog" aria-modal="false"
+             aria-labelledby="chat-title" hidden>
+      <header class="chat-header">
+        <div class="chat-heading">
+          <h2 id="chat-title">Nbapeh</h2>
+          <p class="chat-subtitle" id="chat-subtitle">Ayudante de la plataforma</p>
+        </div>
+        <button type="button" id="chat-close" class="chat-close" aria-label="Cerrar asistente">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41 6.3 6.3-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.3z"/>
+          </svg>
+        </button>
+      </header>
+      <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Conversación">
+        <p class="chat-placeholder">Pregúntame cómo usar el panel.</p>
+      </div>
+      <form class="chat-form" id="chat-form">
+        <label class="visually-hidden" for="chat-input">Mensaje para Nbapeh</label>
+        <input type="text" id="chat-input" placeholder="Escribe un mensaje" autocomplete="off" maxlength="1000">
+        <button type="submit" id="chat-send">Enviar</button>
+      </form>
+      <p class="chat-status" id="chat-status" role="status"></p>
+    </section>
+    <button type="button" id="chat-toggle" class="chat-toggle" aria-expanded="false"
+            aria-controls="chat-panel" aria-label="Abrir asistente">
+      <svg class="chat-toggle-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M20 2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4l4 4 4-4h4a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/>
+      </svg>
+      <span class="chat-toggle-label" id="chat-toggle-label">Nbapeh</span>
+    </button>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="/static/js/chat.js"></script>
+  <script src="/static/js/admin.js"></script>
+</body>
+</html>
